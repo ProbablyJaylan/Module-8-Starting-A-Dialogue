@@ -21,8 +21,8 @@ var dialogue_items: Array[Dictionary] = [
 		"text": "I've been learning about [wave]Arrays and Dictionaries[/wave]",
 		"character": bodies["sophia"],
 		"choices": {
-			"No, I do not wish to wake from my slumber": 1,
-			"Okay fine": 2
+			"No, I do not wish to wake from my slumber": -1,
+			"Okay fine": 1
 		}
 	},
 	{
@@ -30,7 +30,7 @@ var dialogue_items: Array[Dictionary] = [
 		"text": "How has it been going?",
 		"character": bodies["pink"],
 		"choices": {
-			"It has been rather well": 1,
+			"It has been rather well": 3,
 			"It's been going quite bad": 2
 		}
 	},
@@ -40,7 +40,7 @@ var dialogue_items: Array[Dictionary] = [
 		"character": bodies["sophia"],
 		"choices": {
 			"Truth": 1,
-			"False": 2
+			"False": 3
 		}
 	},
 	{
@@ -48,8 +48,8 @@ var dialogue_items: Array[Dictionary] = [
 		"text": "Oh!",
 		"character": bodies["pink"],
 		"choices": {
-			"what": 1,
-			"Huh": 2
+			"what": 4,
+			"Huh": 1
 		}
 	},
 	{
@@ -57,8 +57,8 @@ var dialogue_items: Array[Dictionary] = [
 		"text": "I believe in you!",
 		"character": bodies["pink"],
 		"choices": {
-			"Thanks!": 1,
-			"Im fried...": 2
+			"Thanks!": 5,
+			"Im fried...": 0
 		}
 	},
 	{
@@ -66,8 +66,8 @@ var dialogue_items: Array[Dictionary] = [
 		"text": "If you stick to it, you'll eventually make it!",
 		"character": bodies["pink"],
 		"choices": {
-			"I know it!": 1,
-			"Its so over": 2
+			"I know it!": 6,
+			"Its so over": 4
 		}
 	},
 	{
@@ -92,8 +92,7 @@ var dialogue_items: Array[Dictionary] = [
 @onready var action_buttons_v_box_container: VBoxContainer = $Background/VBoxContainer/ActionButtonsVBoxContainer
 
 func _ready() -> void:
-	create_buttons()
-	show_text(2)
+	show_text(0)
 
 
 
@@ -134,7 +133,7 @@ func show_text(current_item_index: int) -> void:
 	tween.finished.connect(func() -> void:
 		for button in action_buttons_v_box_container.get_children():
 			button.disabled = false)
-
+	create_buttons(current_item["choices"])
 	# We animate the character sliding in.
 	slide_in()
 
@@ -147,7 +146,7 @@ func slide_in() -> void:
 	body.modulate.a = 0
 	slide_tween.parallel().tween_property(body, "modulate:a", 1, 0.2)
 
-func create_buttons() -> void:
+func create_buttons(choices_data: Dictionary) -> void:
 	for button in action_buttons_v_box_container.get_children():
 		button.queue_free()
 	
