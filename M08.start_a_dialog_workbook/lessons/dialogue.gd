@@ -19,37 +19,63 @@ var dialogue_items: Array[Dictionary] = [
 	{
 		"expression": expressions["regular"],
 		"text": "I've been learning about [wave]Arrays and Dictionaries[/wave]",
-		"character": bodies["sophia"]
+		"character": bodies["sophia"],
+		"choices": {
+			"No, I do not wish to wake from my slumber": 1,
+			"Okay fine": 2
+		}
 	},
 	{
 		"expression": expressions["regular"],
 		"text": "How has it been going?",
-		"character": bodies["pink"]
+		"character": bodies["pink"],
+		"choices": {
+			"It has been rather well": 1,
+			"It's been going quite bad": 2
+		}
 	},
 	{
 		"expression": expressions["sad"],
 		"text": "... Well... it is a little bit [shake]complicated[/shake]!",
-		"character": bodies["sophia"]
+		"character": bodies["sophia"],
+		"choices": {
+			"Truth": 1,
+			"False": 2
+		}
 	},
 	{
 		"expression": expressions["sad"],
 		"text": "Oh!",
-		"character": bodies["pink"]
+		"character": bodies["pink"],
+		"choices": {
+			"what": 1,
+			"Huh": 2
+		}
 	},
 	{
 		"expression": expressions["regular"],
 		"text": "I believe in you!",
-		"character": bodies["pink"]
+		"character": bodies["pink"],
+		"choices": {
+			"Thanks!": 1,
+			"Im fried...": 2
+		}
 	},
 	{
 		"expression": expressions["happy"],
 		"text": "If you stick to it, you'll eventually make it!",
-		"character": bodies["pink"]
+		"character": bodies["pink"],
+		"choices": {
+			"I know it!": 1,
+			"Its so over": 2
+		}
 	},
 	{
 		"expression": expressions["happy"],
 		"text": "That's it! Let's [tornado freq=3.0][rainbow val=1.0]GOOOOOO!!![/rainbow][/tornado]",
-		"character": bodies["sophia"]
+		"character": bodies["sophia"],
+		"choices": { "yippie (Quit)": -1
+		}
 	}
 ]
 
@@ -66,6 +92,7 @@ var dialogue_items: Array[Dictionary] = [
 @onready var action_buttons_v_box_container: VBoxContainer = $Background/VBoxContainer/ActionButtonsVBoxContainer
 
 func _ready() -> void:
+	create_buttons()
 	show_text(2)
 
 
@@ -80,6 +107,7 @@ func show_text(current_item_index: int) -> void:
 	rich_text_label.text = current_item["text"]
 	expression.texture = current_item["expression"]
 	body.texture = current_item["character"]
+
 
 	# We set the initial visible ratio to the text to 0, so we can change it in the tween
 	rich_text_label.visible_ratio = 0.0
@@ -101,6 +129,11 @@ func show_text(current_item_index: int) -> void:
 	audio_stream_player.play(sound_start_position)
 	# We make sure the sound stops when the text finishes displaying
 	tween.finished.connect(audio_stream_player.stop)
+	for button: Button in action_buttons_v_box_container.get_children():
+		button.disabled = true
+	tween.finished.connect(func() -> void:
+		for button in action_buttons_v_box_container.get_children():
+			button.disabled = false)
 
 	# We animate the character sliding in.
 	slide_in()
@@ -113,3 +146,17 @@ func slide_in() -> void:
 	slide_tween.tween_property(body, "position:x", 0, 0.3)
 	body.modulate.a = 0
 	slide_tween.parallel().tween_property(body, "modulate:a", 1, 0.2)
+
+func create_buttons() -> void:
+	for button in action_buttons_v_box_container.get_children():
+		button.queue_free()
+	
+	for choice_text in choices_data:
+		var button := Button.new()
+		action_buttons_v_box_container.add_child(button)
+		button.text = choice_text
+		var target_line_idx: int = choices_data[choice_text]
+		if target_line_idx == -1:
+			button.pressed.connect(get_tree().quit)
+		else:
+			button.pressed.connect(show_text.bind(target_line_idx))
