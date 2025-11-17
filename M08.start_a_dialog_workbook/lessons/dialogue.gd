@@ -1,83 +1,12 @@
 extends Control
 
-var expressions := {
-	"happy": preload ("res://assets/emotion_happy.png"),
-	"regular": preload ("res://assets/emotion_regular.png"),
-	"sad": preload ("res://assets/emotion_sad.png"),
-}
 
-var bodies := {
-	"sophia": preload ("res://assets/sophia.png"),
-	"pink": preload ("res://assets/pink.png")
-}
 
 ## An array of dictionaries. Each dictionary has three properties:
 ## - expression: a [code]Texture[/code] containing an expression
 ## - text: a [code]String[/code] containing the text the character says
 ## - character: a [code]Texture[/code] representing the character
-var dialogue_items: Array[Dictionary] = [
-	{
-		"expression": expressions["regular"],
-		"text": "I've been learning about [wave]Arrays and Dictionaries[/wave]",
-		"character": bodies["sophia"],
-		"choices": {
-			"No, I do not wish to wake from my slumber": -1,
-			"Okay fine": 1
-		}
-	},
-	{
-		"expression": expressions["regular"],
-		"text": "How has it been going?",
-		"character": bodies["pink"],
-		"choices": {
-			"It has been rather well": 3,
-			"It's been going quite bad": 2
-		}
-	},
-	{
-		"expression": expressions["sad"],
-		"text": "... Well... it is a little bit [shake]complicated[/shake]!",
-		"character": bodies["sophia"],
-		"choices": {
-			"Truth": 1,
-			"False": 3
-		}
-	},
-	{
-		"expression": expressions["sad"],
-		"text": "Oh!",
-		"character": bodies["pink"],
-		"choices": {
-			"what": 4,
-			"Huh": 1
-		}
-	},
-	{
-		"expression": expressions["regular"],
-		"text": "I believe in you!",
-		"character": bodies["pink"],
-		"choices": {
-			"Thanks!": 5,
-			"Im fried...": 0
-		}
-	},
-	{
-		"expression": expressions["happy"],
-		"text": "If you stick to it, you'll eventually make it!",
-		"character": bodies["pink"],
-		"choices": {
-			"I know it!": 6,
-			"Its so over": 4
-		}
-	},
-	{
-		"expression": expressions["happy"],
-		"text": "That's it! Let's [tornado freq=3.0][rainbow val=1.0]GOOOOOO!!![/rainbow][/tornado]",
-		"character": bodies["sophia"],
-		"choices": { "yippie (Quit)": -1
-		}
-	}
-]
+@export var dialogue_items: Array[DialogueItem] = []
 
 
 ## UI element that shows the texts
@@ -103,10 +32,11 @@ func show_text(current_item_index: int) -> void:
 	# from the item, we extract the properties.
 	# We set the text to the rich text control
 	# And we set the appropriate expression texture
-	rich_text_label.text = current_item["text"]
-	expression.texture = current_item["expression"]
-	body.texture = current_item["character"]
-
+	rich_text_label.text = current_item.text
+	expression.texture = current_item.expression
+	body.texture = current_item.character
+	create_buttons(current_item.choices)
+	
 
 	# We set the initial visible ratio to the text to 0, so we can change it in the tween
 	rich_text_label.visible_ratio = 0.0
@@ -133,9 +63,14 @@ func show_text(current_item_index: int) -> void:
 	tween.finished.connect(func() -> void:
 		for button in action_buttons_v_box_container.get_children():
 			button.disabled = false)
-	create_buttons(current_item["choices"])
 	# We animate the character sliding in.
 	slide_in()
+	for button: Button in action_buttons_v_box_container.get_children():
+		button.disabled = true
+	tween.finished.connect(func() -> void:
+		for button: Button in action_buttons_v_box_container.get_children():
+			button.disabled = false
+	)
 
 ## Animates the character when they start talking
 func slide_in() -> void:
@@ -146,16 +81,16 @@ func slide_in() -> void:
 	body.modulate.a = 0
 	slide_tween.parallel().tween_property(body, "modulate:a", 1, 0.2)
 
-func create_buttons(choices_data: Dictionary) -> void:
+func create_buttons(choices_data: Array[DialogueChoice]) -> void:
 	for button in action_buttons_v_box_container.get_children():
 		button.queue_free()
 	
-	for choice_text in choices_data:
+	for choice in choices_data:
 		var button := Button.new()
 		action_buttons_v_box_container.add_child(button)
-		button.text = choice_text
-		var target_line_idx: int = choices_data[choice_text]
-		if target_line_idx == -1:
+		button.text = choice.text
+		if choice.is_quit == true:
 			button.pressed.connect(get_tree().quit)
 		else:
+			var target_line_idx := choice.target_line_idx
 			button.pressed.connect(show_text.bind(target_line_idx))
